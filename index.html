@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>任务看板</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--bg:#f0f2f5;--card:#fff;--text:#1e293b;--t2:#64748b;--red:#ef4444;--rbg:#fef2f2;--yellow:#f59e0b;--ybg:#fffbeb;--green:#22c55e;--gbg:#f0fdf4;--blue:#3b82f6}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans SC","PingFang SC",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:12px;padding-bottom:80px}
+.container{max-width:800px;margin:0 auto}
+.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:8px;flex-wrap:wrap}
+.top-bar h1{font-size:20px;font-weight:700}
+.top-actions{display:flex;gap:6px;flex-wrap:wrap}
+.top-actions .btn{font-size:12px;padding:5px 10px}
+.btn{display:inline-flex;align-items:center;gap:4px;padding:7px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s;white-space:nowrap}
+.btn:active{opacity:.7}
+.btn-pri{background:var(--blue);color:#fff}
+.btn-out{background:var(--card);border:1.5px solid #e2e8f0;color:var(--t2)}
+.btn-sm{font-size:12px;padding:4px 10px}
+.status-bar{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2);margin-bottom:12px}
+.sdot{width:7px;height:7px;border-radius:50%;background:#94a3b8;transition:background .3s}
+.sdot.on{background:var(--green)}
+.sdot.off{background:var(--red)}
+.stats{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.stat{background:var(--card);padding:10px 14px;border-radius:10px;flex:1;text-align:center;min-width:60px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.stat .num{font-size:22px;font-weight:700}
+.stat .lbl{font-size:11px;color:var(--t2);margin-top:1px}
+.stat.sr .num{color:var(--red)}
+.stat.sy .num{color:var(--yellow)}
+.stat.sg .num{color:var(--green)}
+.stat.sx .num{color:var(--t2)}
+.fc{background:var(--card);border-radius:12px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.fc h2{font-size:14px;font-weight:600;margin-bottom:10px}
+.fr{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.fg{flex:1;min-width:120px}
+.fg label{display:block;font-size:11px;font-weight:500;color:var(--t2);margin-bottom:3px}
+.fg input,.fg select{width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:13px;background:#fff}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--blue)}
+.tl{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.sw{flex:1;position:relative;min-width:140px}
+.sw input{width:100%;padding:8px 12px 8px 30px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;background:var(--card)}
+.sw .si{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--t2);font-size:14px}
+.tbs{display:flex;background:var(--card);border-radius:8px;padding:2px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.tab{padding:5px 12px;border:none;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;background:transparent;color:var(--t2);transition:all .12s}
+.tab.act{background:var(--blue);color:#fff}
+.task-list{display:flex;flex-direction:column;gap:8px}
+.empty{text-align:center;padding:50px 20px;color:var(--t2);background:var(--card);border-radius:12px}
+.empty .ei{font-size:40px;margin-bottom:8px}
+.empty p{font-size:13px}
+.task{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:10px;padding:12px 14px;border-left:3.5px solid transparent;box-shadow:0 1px 2px rgba(0,0,0,.04);transition:opacity .25s}
+.task.urg{border-left-color:var(--red);background:var(--rbg)}
+.task.warn{border-left-color:var(--yellow);background:var(--ybg)}
+.task.safe{border-left-color:var(--green);background:var(--gbg)}
+.task.done{opacity:.5;border-left-color:#94a3b8;background:#f8fafc}
+.task .ck{width:18px;height:18px;border:2px solid #cbd5e1;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:transparent;background:#fff;cursor:pointer}
+.task.done .ck{background:var(--blue);border-color:var(--blue);color:#fff}
+.task .ck:active{border-color:var(--blue)}
+.task .bd{flex:1;min-width:0}
+.task .tt{font-size:14px;font-weight:600}
+.task.done .tt{text-decoration:line-through;color:var(--t2)}
+.task .meta{display:flex;gap:6px;font-size:11px;color:var(--t2);margin-top:2px;flex-wrap:wrap;align-items:center}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:4px;font-weight:500;font-size:11px}
+.b-urg{background:#fecaca;color:#991b1b}
+.b-warn{background:#fde68a;color:#92400e}
+.b-safe{background:#bbf7d0;color:#166534}
+.b-done{background:#e2e8f0;color:#475569}
+.b-ov{background:#fecaca;color:#991b1b;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.task .del{width:28px;height:28px;border:none;border-radius:6px;background:transparent;color:var(--t2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.task .del:active{background:#f1f5f9}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:999;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.sho{display:flex}
+.modal{background:#fff;border-radius:14px;padding:24px;max-width:440px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.15);max-height:80vh;overflow-y:auto}
+.modal h3{font-size:16px;margin-bottom:10px}
+.modal p{font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:12px}
+.modal textarea{width:100%;min-height:100px;padding:10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-family:monospace}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:#1e293b;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;opacity:0;transition:all .3s;z-index:9999;pointer-events:none}
+.toast.sho{opacity:1;transform:translateX(-50%) translateY(0)}
+#file-input{display:none}
+.loading{text-align:center;padding:40px;color:var(--t2)}
+.loading .spinner{display:inline-block;width:24px;height:24px;border:3px solid #e2e8f0;border-top-color:var(--blue);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="top-bar"><h1>📋 任务看板</h1><div class="top-actions">
+<button class="btn btn-out btn-sm" onclick="showExport()">📤</button>
+<button class="btn btn-out btn-sm" onclick="document.getElementById('file-input').click()">📥</button>
+<input type="file" id="file-input" accept=".json" onchange="handleImport(event)">
+<button class="btn btn-out btn-sm" onclick="showShare()">🔗</button></div></div>
+<div class="status-bar"><span class="sdot off" id="sdot"></span><span id="stxt">连接中...</span></div>
+<div class="stats">
+<div class="stat sr"><div class="num" id="c0">0</div><div class="lbl">🔴 紧急</div></div>
+<div class="stat sy"><div class="num" id="c1">0</div><div class="lbl">🟡 注意</div></div>
+<div class="stat sg"><div class="num" id="c2">0</div><div class="lbl">🟢 宽裕</div></div>
+<div class="stat sx"><div class="num" id="c3">0</div><div class="lbl">✅ 完成</div></div></div>
+<div class="fc">
+<h2>✚ 添加事项</h2><div class="fr">
+<div class="fg" style="flex:2"><label>事项</label><input type="text" id="ti" placeholder="做什么？" autocomplete="off"></div>
+<div class="fg"><label>截止</label><input type="date" id="di"></div>
+<div class="fg"><label>程度</label><select id="pi"><option value="auto">🔄 自动</option><option value="urgent">🔴 紧急</option><option value="warning">🟡 注意</option><option value="safe">🟢 宽裕</option></select></div>
+<button class="btn btn-pri" id="add-btn" style="height:34px">添加</button></div></div>
+<div class="tl">
+<div class="sw"><span class="si">🔍</span><input type="text" id="si" placeholder="搜索..." autocomplete="off"></div>
+<div class="tbs">
+<button class="tab act" data-sort="deadline">📅 日期</button>
+<button class="tab" data-sort="title">📝 内容</button>
+<button class="tab" data-sort="priority">🚦 紧急</button></div></div>
+<div class="task-list" id="tl">
+<div class="loading" id="loading"><div class="spinner"></div><p style="margin-top:10px">加载中...</p></div></div></div>
+<div class="modal-overlay" id="share-modal"><div class="modal">
+<h3>🔗 分享数据</h3><p>复制下方 JSON 发给其他人，对方点击 📥 导入即可看到相同的任务。</p>
+<textarea id="share-data" readonly></textarea>
+<div class="modal-actions">
+<button class="btn btn-out" onclick="closeM()">关闭</button>
+<button class="btn btn-pri" onclick="copyS()">📋 复制</button></div></div></div>
+<div class="toast" id="toast"></div>
+<script>
+const API="/api/tasks";let tasks=[];let sortBy="deadline";let tt=null;
+function toast(m){const e=document.getElementById("toast");e.textContent=m;e.classList.add("sho");clearTimeout(tt);tt=setTimeout(()=>e.classList.remove("sho"),2200)}
+function setOn(ok){const d=document.getElementById("sdot"),t=document.getElementById("stxt");d.className="sdot "+(ok?"on":"off");t.textContent=ok?"✓ 已连接":"⚠ 离线"}
+async function api(p,o){const r=await fetch(p,{headers:{"Content-Type":"application/json"},...o});if(!r.ok){const e=await r.json().catch(()=>({error:"请求失败"}));throw new Error(e.error||"请求失败")}return r.json()}
+async function load(){try{tasks=await api(API);setOn(true)}catch(e){setOn(false)}render()}
+async function addTask(){const ti=document.getElementById("ti"),di=document.getElementById("di"),pi=document.getElementById("pi");const title=ti.value.trim(),deadline=di.value,priority=pi.value;if(!title){toast("请输入内容");return}if(!deadline){toast("请选择日期");return}try{await api(API,{method:"POST",body:JSON.stringify({title,deadline,priority})});ti.value="";ti.focus();await load();toast("✅ 已添加")}catch(e){toast("❌ "+e.message)}}
+async function toggleDone(id,v){try{await api(API+"/"+id,{method:"PATCH",body:JSON.stringify({done:!v})});await load()}catch{toast("❌ 操作失败")}}
+async function deleteTask(id){if(!confirm("确定删除？"))return;try{await api(API+"/"+id,{method:"DELETE"});await load();toast("🗑️ 已删除")}catch{toast("❌ 失败")}}
+async function handleImport(e){const f=e.target.files[0];if(!f)return;const txt=await f.text();let d;try{d=JSON.parse(txt)}catch{toast("❌ 格式错误");return}if(!Array.isArray(d)){toast("❌ 格式错误");return}const mode=confirm("「确定」追加
+「取消」替换")?"append":"replace";try{const r=await api(API+"/import?mode="+mode,{method:"POST",body:JSON.stringify(d)});await load();toast("✅ 导入 "+r.count+" 条")}catch{toast("❌ 导入失败")}e.target.value=""}
+function showExport(){window.open(API+"/export","_blank")}
+async function showShare(){try{const d=await api(API+"/export");document.getElementById("share-data").value=JSON.stringify(d,null,2);document.getElementById("share-modal").classList.add("sho")}catch{toast("❌ 获取失败")}}
+function copyS(){const ta=document.getElementById("share-data");ta.select();navigator.clipboard.writeText(ta.value).then(()=>toast("✅ 已复制"))}
+function closeM(){document.getElementById("share-modal").classList.remove("sho")}
+function daysLeft(ds){const t=new Date();t.setHours(0,0,0,0);const d=new Date(ds+"T00:00:00");return Math.ceil((d-t)/86400000)}
+function fmtDate(ds){const d=new Date(ds+"T00:00:00");const w=["日","一","二","三","四","五","六"];return (d.getMonth()+1)+"月"+d.getDate()+"日 周"+w[d.getDay()]}
+function getColor(t){if(t.done)return"done";if(t.priority!=="auto")return t.priority;const d=daysLeft(t.deadline);return d<=3?"urgent":d<=7?"warning":"safe"}
+function render(){const list=document.getElementById("tl");const q=document.getElementById("si").value.toLowerCase().trim();let flt=tasks.filter(t=>!q||t.title.toLowerCase().includes(q));flt.sort((a,b)=>{if(a.done!==b.done)return a.done?1:-1;if(sortBy==="deadline"){const da=daysLeft(a.deadline),db=daysLeft(b.deadline);return da!==db?da-db:a.title.localeCompare(b.title)}if(sortBy==="title")return a.title.localeCompare(b.title);if(sortBy==="priority"){const o={urgent:0,warning:1,safe:2},ca=getColor(a),cb=getColor(b);return(o[ca]??9)-(o[cb]??9)||daysLeft(a.deadline)-daysLeft(b.deadline)}return 0});if(flt.length===0){list.innerHTML='<div class="empty"><div class="ei">📭</div><p>'+(tasks.length===0?"还没有任务":"没有匹配的")+'</p></div>'}else{list.innerHTML=flt.map(t=>{const c=getColor(t),d=daysLeft(t.deadline);let badge="";if(t.done)badge='<span class="badge b-done">✅ 完成</span>';else if(d<0)badge='<span class="badge b-ov">⚠️ 逾期 '+Math.abs(d)+'天</span>';else if(c==="urgent")badge=d===0?'<span class="badge b-urg">🔥 今天</span>':d===1?'<span class="badge b-urg">🔥 明天</span>':'<span class="badge b-urg">🔥 '+d+'天</span>';else if(c==="warning")badge='<span class="badge b-warn">🟡 '+d+'天</span>';else badge='<span class="badge b-safe">🟢 '+d+'天</span>';return '<div class="task '+c+(t.done?" done":"")+'"><div class="ck" onclick="toggleDone(\''+t.id+"\',"+t.done+')">✓</div><div class="bd"><div class="tt">'+esc(t.title)+'</div><div class="meta"><span>📅 '+fmtDate(t.deadline)+"</span>"+badge+'</div></div><button class="del" onclick="deleteTask(\''+t.id+"\')">✕</button></div>"}).join("")}document.getElementById("c0").textContent=tasks.filter(t=>!t.done&&getColor(t)==="urgent").length;document.getElementById("c1").textContent=tasks.filter(t=>!t.done&&getColor(t)==="warning").length;document.getElementById("c2").textContent=tasks.filter(t=>!t.done&&getColor(t)==="safe").length;document.getElementById("c3").textContent=tasks.filter(t=>t.done).length}
+function esc(s){const e=document.createElement("div");e.textContent=s;return e.innerHTML}
+function setDef(){const d=new Date();d.setDate(d.getDate()+7);document.getElementById("di").value=d.toISOString().split("T")[0]}
+document.getElementById("add-btn").addEventListener("click",addTask);document.getElementById("ti").addEventListener("keydown",e=>{if(e.key==="Enter")addTask()});document.getElementById("si").addEventListener("input",render);document.querySelectorAll(".tab").forEach(b=>{b.addEventListener("click",()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("act"));b.classList.add("act");sortBy=b.dataset.sort;render()})});document.getElementById("share-modal").addEventListener("click",e=>{if(e.target===e.currentTarget)closeM()});setDef();load();setInterval(load,30000);
+</script>
+</body>
+</html>
